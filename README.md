@@ -6,3 +6,4 @@ Static, public read-only dashboard powered by pre-built JSON data.
 - Data: `api/summary.json` (generated from the private `jimmy-ledger` repo)
 <!-- deploy trigger 1772484178 -->
 <!-- data deploy trigger 1772484660 -->
+<!-- deploy trigger 1772484953 -->
