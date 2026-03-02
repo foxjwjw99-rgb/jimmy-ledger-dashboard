@@ -51,7 +51,7 @@
 <body>
 <div class="container">
   <h1>Jimmy Ledger Dashboard</h1>
-  <p class="subtitle">Public read-only view &mdash; data from GitHub private repo via server.</p>
+  <p class="subtitle">Public read-only view &mdash; data generated from private repo via GitHub Actions.</p>
 
   <div class="filter-bar">
     <div class="filter-buttons">
@@ -125,10 +125,108 @@ function qs(obj){
 }
 
 async function loadSummary(params){
-  const res = await fetch("./api/summary.json");
-  const j = await res.json();
-  return j;
+  // Static daily aggregates (month shard)
+  const res = await fetch("./api/daily-2026-03.json");
+  const daily = await res.json();
+
+  // helpers
+  const days = daily.days || [];
+  const tz = daily.timezone || 'Asia/Taipei';
+
+  function ymdNow(){
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(new Date());
+    const get = (t) => parts.find(p => p.type === t)?.value;
+    return `${get('year')}-${get('month')}-${get('day')}`;
+  }
+  function ymdToUtcDate(ymd){
+    const [y,m,d]=ymd.split('-').map(Number);
+    return new Date(Date.UTC(y, m-1, d));
+  }
+  function addDaysYmd(ymd, delta){
+    const dt = ymdToUtcDate(ymd);
+    dt.setUTCDate(dt.getUTCDate()+delta);
+    return dt.toISOString().slice(0,10);
+  }
+  function endOfMonthYmd(ym){
+    const [y,m]=ym.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m, 0));
+    return dt.toISOString().slice(0,10);
+  }
+  function weekStartMondayYmd(ymd){
+    const dt = ymdToUtcDate(ymd);
+    const dow = dt.getUTCDay();
+    const delta = (dow + 6) % 7; // Mon->0, Sun->6
+    return addDaysYmd(ymd, -delta);
+  }
+  function clampRange(from,to){
+    if (from && to && from>to) return {from:to,to:from};
+    return {from,to};
+  }
+
+  // resolve range
+  const today = ymdNow();
+  let range = (params?.range||'').toString();
+  let from = params?.from?.toString();
+  let to = params?.to?.toString();
+
+  if (from || to){
+    from = from || to || today;
+    to = to || from || today;
+    ({from,to} = clampRange(from,to));
+    range = 'custom';
+  } else if (range === 'today'){
+    from = to = today;
+  } else if (range === 'week'){
+    from = weekStartMondayYmd(today);
+    to = addDaysYmd(from, 6);
+  } else if (range === 'last30'){
+    to = today;
+    from = addDaysYmd(today, -29);
+  } else {
+    // month default
+    const ym = (today||'').slice(0,7);
+    from = `${ym}-01`;
+    to = endOfMonthYmd(ym);
+    range = 'month';
+  }
+
+  // build day map for quick lookup
+  const byDay = new Map(days.map(d => [d.day, d]));
+  let expense=0, income=0;
+  const byDaySeries=[];
+  for (let d=from; d<=to; d=addDaysYmd(d,1)){
+    const row = byDay.get(d) || {expense:0,income:0};
+    expense += Number(row.expense||0);
+    income += Number(row.income||0);
+    byDaySeries.push({day:d, expense:Number(row.expense||0), income:Number(row.income||0)});
+  }
+
+  const last14Days = byDaySeries.slice(-14);
+
+  // Use monthly topCategories from daily file (safe + cheap)
+  const topCategories = daily.topCategories || [];
+
+  return {
+    range: { from, to, label: range==='custom' ? `${from} ~ ${to}` : (range==='today'?'今天': range==='week'?'本週（週一～週日）': range==='last30'?'近 30 天': `本月（${from.slice(0,7)}）`) },
+    ymBudget: daily.ym,
+    expense,
+    income,
+    net: income-expense,
+    budgetTotal: daily.budgetTotal || 0,
+    budgetMonthExpense: daily.budgetMonthExpense || 0,
+    budgetRemaining: daily.budgetRemaining || 0,
+    topCategories,
+    last14Days,
+    chart: {
+      dayLabels: last14Days.map(x=>x.day),
+      dayExpenses: last14Days.map(x=>x.expense),
+      dayIncomes: last14Days.map(x=>x.income),
+      catLabels: topCategories.map(x=>x.category),
+      catValues: topCategories.map(x=>x.expense),
+    }
+  };
 }
+
 
 
 function render(j){
