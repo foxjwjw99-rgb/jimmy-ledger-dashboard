@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jimmy Ledger Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh;}
+    .container{max-width:1040px;margin:0 auto;padding:24px 16px;}
+    h1{font-size:1.6rem;font-weight:700;margin-bottom:4px;}
+    .subtitle{color:#64748b;font-size:.85rem;margin-bottom:24px;}
+    .filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;}
+    .filter-buttons{display:flex;flex-wrap:wrap;gap:8px;}
+    .filter-dates{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}
+    .filter-dates label{font-size:.85rem;color:#475569;display:flex;gap:6px;align-items:center;}
+    input[type="date"]{border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;background:#fff;color:#0f172a;}
+    .pill{border:1px solid #e2e8f0;background:#f8fafc;color:#0f172a;border-radius:999px;padding:8px 12px;font-size:.85rem;cursor:pointer;}
+    .pill:hover{background:#f1f5f9;}
+    .pill.active{background:#0f172a;color:#fff;border-color:#0f172a;}
+
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;}
+    .card .label{font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .card .value{font-size:1.6rem;font-weight:700;}
+    .card .value.positive{color:#16a34a;}
+    .card .value.negative{color:#dc2626;}
+
+    .budget-section{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;}
+    .budget-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+    .budget-header h2{font-size:1rem;font-weight:600;}
+    .budget-header .budget-nums{font-size:.85rem;color:#64748b;}
+    .progress-track{background:#e2e8f0;border-radius:8px;height:14px;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:8px;transition:width .4s ease;}
+
+    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+    @media(max-width:680px){.chart-grid{grid-template-columns:1fr;}}
+    .chart-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;}
+    .chart-card h2{font-size:.95rem;font-weight:600;margin-bottom:12px;}
+    .chart-card canvas{width:100%!important;max-height:280px;}
+
+    .table-section{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;}
+    .table-section h2{font-size:.95rem;font-weight:600;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;}
+    th{text-align:left;font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;padding:8px 8px 8px 0;border-bottom:2px solid #e2e8f0;}
+    td{padding:8px 8px 8px 0;border-bottom:1px solid #f1f5f9;font-size:.9rem;}
+    .muted{color:#94a3b8;}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Jimmy Ledger Dashboard</h1>
+  <p class="subtitle">Public read-only view &mdash; data from GitHub private repo via server.</p>
+
+  <div class="filter-bar">
+    <div class="filter-buttons">
+      <button class="pill" data-range="today">今天</button>
+      <button class="pill" data-range="week">本週</button>
+      <button class="pill" data-range="month">本月</button>
+      <button class="pill" data-range="last30">近 30 天</button>
+    </div>
+    <div class="filter-dates">
+      <label>起日 <input type="date" id="fromDate" /></label>
+      <span class="muted" style="padding:0 6px;">～</span>
+      <label>迄日 <input type="date" id="toDate" /></label>
+      <button class="pill" id="applyCustom">套用</button>
+    </div>
+    <div class="filter-meta muted" id="rangeLabel" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="budget-section" id="budget-section" style="display:none;">
+    <div class="budget-header">
+      <h2>Budget Progress</h2>
+      <span class="budget-nums" id="budget-nums"></span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h2 id="lineTitle">近 14 天（支出 / 收入）</h2>
+      <canvas id="lineChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2 id="catTitle">分類支出占比</h2>
+      <canvas id="doughnutChart"></canvas>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <h2 id="topCatTitle">Top Categories</h2>
+    <table id="cats"><thead><tr><th>Category</th><th>Expense</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="table-section">
+    <h2 id="daysTitle">近 14 天明細</h2>
+    <table id="days"><thead><tr><th>Date</th><th>Expense</th><th>Income</th></tr></thead><tbody></tbody></table>
+  </div>
+</div>
+
+<script>
+function n(v){ return Math.round(v).toLocaleString('en-US'); }
+
+const COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+
+let lineChart, doughnutChart;
+
+function setActiveRange(range){
+  document.querySelectorAll('.pill[data-range]').forEach(b => {
+    b.classList.toggle('active', b.dataset.range === range);
+  });
+}
+
+function qs(obj){
+  const p = new URLSearchParams();
+  for (const [k,v] of Object.entries(obj)){
+    if (v === undefined || v === null || v === '') continue;
+    p.set(k, v);
+  }
+  const s = p.toString();
+  return s ? ('?'+s) : '';
+}
+
+async function loadSummary(params){
+  const res = await fetch("./api/summary.json");
+  const j = await res.json();
+  return j;
+}
+
+
+function render(j){
+  // Range label
+  const rangeText = j?.range?.label ? `範圍：${j.range.label}` : '';
+  document.getElementById('rangeLabel').textContent = rangeText;
+  if (j?.range?.from) document.getElementById('fromDate').value = j.range.from;
+  if (j?.range?.to) document.getElementById('toDate').value = j.range.to;
+
+  // Cards
+  const cards = document.getElementById('cards');
+  const items = [
+    {label:'支出', value:'NT$ '+n(j.expense), cls:'negative'},
+    {label:'收入', value:'NT$ '+n(j.income), cls:'positive'},
+    {label:'結餘', value:'NT$ '+n(j.net), cls: j.net>=0?'positive':'negative'},
+  ];
+  cards.innerHTML = items.map(c =>
+    '<div class="card"><div class="label">'+c.label+'</div><div class="value '+c.cls+'">'+c.value+'</div></div>'
+  ).join('');
+
+  // Titles
+  document.getElementById('lineTitle').textContent = '近 14 天（支出 / 收入）';
+  document.getElementById('catTitle').textContent = '分類支出占比';
+  document.getElementById('topCatTitle').textContent = 'Top Categories';
+  document.getElementById('daysTitle').textContent = '近 14 天明細';
+
+  // Budget progress (always month-based)
+  const sec = document.getElementById('budget-section');
+  if (j.budgetTotal > 0){
+    sec.style.display = '';
+    const spent = j.budgetMonthExpense;
+    const total = j.budgetTotal;
+    const remaining = j.budgetRemaining;
+    const pct = Math.min(100, Math.round((spent/total)*100));
+    document.getElementById('budget-nums').textContent =
+      `本月（${j.ymBudget}）已花 NT$ ${n(spent)} / NT$ ${n(total)} — 剩餘 NT$ ${n(remaining)}`;
+    const fill = document.getElementById('progress-fill');
+    fill.style.width = pct+'%';
+    fill.style.background = pct > 90 ? '#dc2626' : pct > 70 ? '#f59e0b' : '#16a34a';
+  } else {
+    sec.style.display = 'none';
+  }
+
+  // Charts (destroy before re-render)
+  if (lineChart) lineChart.destroy();
+  if (doughnutChart) doughnutChart.destroy();
+
+  const lineCtx = document.getElementById('lineChart').getContext('2d');
+  lineChart = new Chart(lineCtx, {
+    type:'line',
+    data:{
+      labels: j.chart.dayLabels.map(d => d.slice(5)),
+      datasets:[
+        {label:'支出', data:j.chart.dayExpenses, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)', fill:true, tension:.3},
+        {label:'收入', data:j.chart.dayIncomes, borderColor:'#16a34a', backgroundColor:'rgba(22,163,74,.1)', fill:true, tension:.3},
+      ]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}}}
+  });
+
+  const dCtx = document.getElementById('doughnutChart').getContext('2d');
+  doughnutChart = new Chart(dCtx, {
+    type:'doughnut',
+    data:{
+      labels: j.chart.catLabels,
+      datasets:[{data:j.chart.catValues, backgroundColor:COLORS.slice(0,j.chart.catLabels.length)}]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+  });
+
+  // Tables
+  const catBody = document.querySelector('#cats tbody');
+  catBody.innerHTML = j.topCategories.map(x =>
+    '<tr><td>'+x.category+'</td><td>NT$ '+n(x.expense)+'</td></tr>'
+  ).join('') || '<tr><td colspan="2" class="muted">No data</td></tr>';
+
+  const dayBody = document.querySelector('#days tbody');
+  dayBody.innerHTML = j.last14Days.map(x =>
+    '<tr><td>'+x.day+'</td><td>NT$ '+n(x.expense)+'</td><td>NT$ '+n(x.income)+'</td></tr>'
+  ).join('') || '<tr><td colspan="3" class="muted">No data</td></tr>';
+}
+
+async function main(){
+  // Default: month
+  setActiveRange('month');
+  const j = await loadSummary({ range: 'month' });
+  render(j);
+
+  // Quick range buttons
+  document.querySelectorAll('.pill[data-range]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const r = btn.dataset.range;
+      setActiveRange(r);
+      const jj = await loadSummary({ range: r });
+      render(jj);
+    });
+  });
+
+  // Custom range
+  document.getElementById('applyCustom').addEventListener('click', async () => {
+    setActiveRange('');
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    const jj = await loadSummary({ from, to });
+    render(jj);
+  });
+}
+
+main();
+</script>
+</body>
+</html>

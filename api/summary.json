@@ -1,0 +1,13 @@
+{
+  "range": {"from": "", "to": "", "label": ""},
+  "ymBudget": "",
+  "expense": 0,
+  "income": 0,
+  "net": 0,
+  "budgetTotal": 0,
+  "budgetMonthExpense": 0,
+  "budgetRemaining": 0,
+  "topCategories": [],
+  "last14Days": [],
+  "chart": {"dayLabels": [], "dayExpenses": [], "dayIncomes": [], "catLabels": [], "catValues": []}
+}
