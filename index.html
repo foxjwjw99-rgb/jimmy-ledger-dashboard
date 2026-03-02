@@ -126,7 +126,28 @@ function qs(obj){
 
 async function loadSummary(params){
   // Static daily aggregates (month shard)
-  const res = await fetch("./api/daily-2026-03.json");
+  const TZ = 'Asia/Taipei';
+  function ymNow(){
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year:'numeric', month:'2-digit' }).formatToParts(new Date());
+    const get = (t) => parts.find(p => p.type === t)?.value;
+    return `${get('year')}-${get('month')}`;
+  }
+  function prevYm(ym){
+    const [y,m]=ym.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m-1, 1));
+    d.setUTCMonth(d.getUTCMonth()-1);
+    return d.toISOString().slice(0,7);
+  }
+
+  async function fetchDaily(ym){
+    const res = await fetch(`./api/daily-${ym}.json`);
+    if (!res.ok) return null;
+    return await res.json();
+  }
+
+  let daily = await fetchDaily(ymNow());
+  if (!daily) daily = await fetchDaily(prevYm(ymNow()));
+  if (!daily) throw new Error('Missing daily data JSON');
   const daily = await res.json();
 
   // helpers
