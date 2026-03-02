@@ -148,7 +148,6 @@ async function loadSummary(params){
   let daily = await fetchDaily(ymNow());
   if (!daily) daily = await fetchDaily(prevYm(ymNow()));
   if (!daily) throw new Error('Missing daily data JSON');
-  const daily = await res.json();
 
   // helpers
   const days = daily.days || [];
