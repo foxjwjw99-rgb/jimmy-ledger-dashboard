@@ -2,9 +2,9 @@
   "schema": "jimmy-ledger.daily-totals.v1",
   "timezone": "Asia/Taipei",
   "ym": "2026-03",
-  "budgetTotal": 6000,
+  "budgetTotal": 5000,
   "budgetMonthExpense": 50,
-  "budgetRemaining": 5950,
+  "budgetRemaining": 4950,
   "topCategories": [
     {
       "category": "餐飲",
