@@ -161,6 +161,14 @@
   <h1>Jimmy Ledger Dashboard</h1>
   <p class="subtitle">Public read-only view &mdash; data generated from private repo via GitHub Actions.</p>
 
+  <div class="filter-bar" style="margin-bottom:12px;">
+    <div class="filter-buttons" id="personButtons">
+      <button class="pill" data-person="jimmy">Jimmy</button>
+      <button class="pill" data-person="winnie">Winnie</button>
+    </div>
+    <div class="filter-meta muted" id="personLabel" style="margin-top:8px;"></div>
+  </div>
+
   <div class="filter-bar">
     <div class="filter-buttons">
       <button class="pill" data-range="today">今天</button>
@@ -216,6 +224,12 @@ const COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14
 
 let lineChart, doughnutChart;
 
+function setActivePerson(person){
+  document.querySelectorAll('.pill[data-person]').forEach(b => {
+    b.classList.toggle('active', b.dataset.person === person);
+  });
+}
+
 function setActiveRange(range){
   document.querySelectorAll('.pill[data-range]').forEach(b => {
     b.classList.toggle('active', b.dataset.range === range);
@@ -247,14 +261,16 @@ async function loadSummary(params){
     return d.toISOString().slice(0,7);
   }
 
-  async function fetchDaily(ym){
-    const res = await fetch(`./api/daily-${ym}.json`);
+  async function fetchDaily(ym, person){
+    const res = await fetch(`./api/daily-${ym}-${person}.json`);
     if (!res.ok) return null;
     return await res.json();
   }
 
-  let daily = await fetchDaily(ymNow());
-  if (!daily) daily = await fetchDaily(prevYm(ymNow()));
+  const person = (params?.person || 'jimmy').toString();
+
+  let daily = await fetchDaily(ymNow(), person);
+  if (!daily) daily = await fetchDaily(prevYm(ymNow()), person);
   if (!daily) throw new Error('Missing daily data JSON');
 
   // helpers
@@ -336,6 +352,7 @@ async function loadSummary(params){
   const topCategories = daily.topCategories || [];
 
   return {
+    person,
     range: { from, to, label: range==='custom' ? `${from} ~ ${to}` : (range==='today'?'今天': range==='week'?'本週（週一～週日）': range==='last30'?'近 30 天': `本月（${from.slice(0,7)}）`) },
     ymBudget: daily.ym,
     expense,
@@ -362,6 +379,11 @@ function render(j){
   // Range label
   const rangeText = j?.range?.label ? `範圍：${j.range.label}` : '';
   document.getElementById('rangeLabel').textContent = rangeText;
+
+  const personText = (j?.person === 'winnie') ? '目前視角：Winnie' : '目前視角：Jimmy';
+  const pl = document.getElementById('personLabel');
+  if (pl) pl.textContent = personText;
+
   if (j?.range?.from) document.getElementById('fromDate').value = j.range.from;
   if (j?.range?.to) document.getElementById('toDate').value = j.range.to;
 
@@ -439,9 +461,13 @@ function render(j){
 }
 
 async function main(){
-  // Default: month
-  setActiveRange('month');
-  const j = await loadSummary({ range: 'month' });
+  // Default
+  let currentRange = 'month';
+  let currentPerson = 'jimmy';
+  setActiveRange(currentRange);
+  setActivePerson(currentPerson);
+
+  const j = await loadSummary({ range: currentRange, person: currentPerson });
   render(j);
 
   // Quick range buttons
@@ -449,7 +475,19 @@ async function main(){
     btn.addEventListener('click', async () => {
       const r = btn.dataset.range;
       setActiveRange(r);
-      const jj = await loadSummary({ range: r });
+      currentRange = r;
+      const jj = await loadSummary({ range: r, person: currentPerson });
+      render(jj);
+    });
+  });
+
+
+  // Person switch
+  document.querySelectorAll('.pill[data-person]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      currentPerson = btn.dataset.person;
+      setActivePerson(currentPerson);
+      const jj = await loadSummary({ range: currentRange, from: document.getElementById('fromDate').value, to: document.getElementById('toDate').value, person: currentPerson });
       render(jj);
     });
   });
@@ -459,7 +497,8 @@ async function main(){
     setActiveRange('');
     const from = document.getElementById('fromDate').value;
     const to = document.getElementById('toDate').value;
-    const jj = await loadSummary({ from, to });
+    currentRange = 'custom';
+    const jj = await loadSummary({ from, to, person: currentPerson });
     render(jj);
   });
 }
