@@ -3,23 +3,23 @@
   "timezone": "Asia/Taipei",
   "ym": "2026-03",
   "budgetTotal": 5000,
-  "budgetMonthExpense": 50,
-  "budgetRemaining": 4950,
+  "budgetMonthExpense": 228,
+  "budgetRemaining": 4772,
   "topCategories": [
     {
       "category": "餐飲",
-      "expense": 50
+      "expense": 228
     }
   ],
   "days": [
     {
       "day": "2026-03-01",
-      "expense": 0,
+      "expense": 104,
       "income": 0
     },
     {
       "day": "2026-03-02",
-      "expense": 50,
+      "expense": 124,
       "income": 0
     },
     {
