@@ -203,10 +203,10 @@ async function loadSummary(params){
     to = today;
     from = addDaysYmd(today, -29);
   } else {
-    // month default
+    // month default (month-to-date)
     const ym = (today||'').slice(0,7);
     from = `${ym}-01`;
-    to = endOfMonthYmd(ym);
+    to = today;
     range = 'month';
   }
 
