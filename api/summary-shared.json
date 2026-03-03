@@ -5,20 +5,20 @@
     "label": "本月（2026-03）"
   },
   "ymBudget": "2026-03",
-  "expense": 874,
+  "expense": 1301,
   "income": 0,
-  "net": -874,
+  "net": -1301,
   "budgetTotal": 10000,
-  "budgetMonthExpense": 874,
-  "budgetRemaining": 9126,
+  "budgetMonthExpense": 1301,
+  "budgetRemaining": 8699,
   "topCategories": [
+    {
+      "category": "餐飲",
+      "expense": 783
+    },
     {
       "category": "生活",
       "expense": 518
-    },
-    {
-      "category": "餐飲",
-      "expense": 356
     }
   ],
   "last14Days": [
@@ -34,7 +34,7 @@
     },
     {
       "day": "2026-03-03",
-      "expense": 518,
+      "expense": 945,
       "income": 0
     }
   ],
@@ -47,7 +47,7 @@
     "dayExpenses": [
       208,
       148,
-      518
+      945
     ],
     "dayIncomes": [
       0,
@@ -55,12 +55,12 @@
       0
     ],
     "catLabels": [
-      "生活",
-      "餐飲"
+      "餐飲",
+      "生活"
     ],
     "catValues": [
-      518,
-      356
+      783,
+      518
     ]
   }
 }
