@@ -221,7 +221,8 @@ async function loadSummary(params){
     byDaySeries.push({day:d, expense:Number(row.expense||0), income:Number(row.income||0)});
   }
 
-  const last14Days = byDaySeries.slice(-14);
+  // Display recent 14 days up to the selected end date (avoid future zeros)
+  const last14Days = byDaySeries.filter(x => x.day <= to).slice(-14);
 
   // Use monthly topCategories from daily file (safe + cheap)
   const topCategories = daily.topCategories || [];
