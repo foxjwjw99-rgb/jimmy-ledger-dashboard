@@ -6,46 +6,154 @@
   <title>Jimmy Ledger Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
+
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e2e8f0;
+      --text:#0f172a;
+      --muted:#64748b;
+      --accent:#4f46e5;
+      --danger:#ef4444;
+      --success:#16a34a;
+      --shadow: 0 1px 2px rgba(15,23,42,.06), 0 10px 30px rgba(15,23,42,.08);
+      --radius:14px;
+    }
+
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh;}
-    .container{max-width:1040px;margin:0 auto;padding:24px 16px;}
-    h1{font-size:1.6rem;font-weight:700;margin-bottom:4px;}
-    .subtitle{color:#64748b;font-size:.85rem;margin-bottom:24px;}
-    .filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;}
+    html{color-scheme:light;}
+    body{
+      font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",sans-serif;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      line-height:1.45;
+    }
+
+    .container{max-width:1040px;margin:0 auto;padding:28px 16px;}
+    h1{font-size:1.55rem;font-weight:750;letter-spacing:-.02em;margin-bottom:6px;}
+    .subtitle{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
+
+    .filter-bar{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:14px;
+      margin-bottom:16px;
+      box-shadow:var(--shadow);
+    }
+
     .filter-buttons{display:flex;flex-wrap:wrap;gap:8px;}
-    .filter-dates{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}
-    .filter-dates label{font-size:.85rem;color:#475569;display:flex;gap:6px;align-items:center;}
-    input[type="date"]{border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;background:#fff;color:#0f172a;}
-    .pill{border:1px solid #e2e8f0;background:#f8fafc;color:#0f172a;border-radius:999px;padding:8px 12px;font-size:.85rem;cursor:pointer;}
-    .pill:hover{background:#f1f5f9;}
-    .pill.active{background:#0f172a;color:#fff;border-color:#0f172a;}
+    .filter-dates{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;}
+    .filter-dates label{font-size:.85rem;color:#475569;display:flex;gap:8px;align-items:center;}
 
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
-    .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;}
-    .card .label{font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-    .card .value{font-size:1.6rem;font-weight:700;}
-    .card .value.positive{color:#16a34a;}
-    .card .value.negative{color:#dc2626;}
+    input[type="date"]{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:9px 10px;
+      background:#fff;
+      color:var(--text);
+      font-variant-numeric:tabular-nums;
+    }
+    input[type="date"]:focus{outline:none;}
 
-    .budget-section{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;}
-    .budget-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
-    .budget-header h2{font-size:1rem;font-weight:600;}
-    .budget-header .budget-nums{font-size:.85rem;color:#64748b;}
-    .progress-track{background:#e2e8f0;border-radius:8px;height:14px;overflow:hidden;}
-    .progress-fill{height:100%;border-radius:8px;transition:width .4s ease;}
+    button{font-family:inherit;}
+    .pill{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:9px 12px;
+      font-size:.88rem;
+      cursor:pointer;
+      transition:background .15s ease,border-color .15s ease,color .15s ease,transform .05s ease;
+    }
+    .pill:hover{background:#f8fafc;border-color:#cbd5e1;}
+    .pill:active{transform:translateY(1px);}
+    .pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+    .pill:focus-visible{outline:3px solid rgba(79,70,229,.25);outline-offset:2px;}
 
-    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:18px;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px 18px 16px;
+      box-shadow:var(--shadow);
+    }
+    .card .label{font-size:.82rem;color:var(--muted);margin-bottom:8px;}
+    .card .value{font-size:1.75rem;font-weight:760;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+    .card .value.positive{color:var(--success);}
+    .card .value.negative{color:var(--danger);}
+
+    .budget-section{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      margin-bottom:18px;
+      box-shadow:var(--shadow);
+    }
+    .budget-header{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:10px;}
+    .budget-header h2{font-size:1rem;font-weight:650;}
+    .budget-header .budget-nums{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums;}
+    .progress-track{background:#e2e8f0;border-radius:999px;height:12px;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:999px;transition:width .4s ease;}
+
+    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
     @media(max-width:680px){.chart-grid{grid-template-columns:1fr;}}
-    .chart-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;}
-    .chart-card h2{font-size:.95rem;font-weight:600;margin-bottom:12px;}
+    .chart-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .chart-card h2{font-size:.98rem;font-weight:650;margin-bottom:12px;}
     .chart-card canvas{width:100%!important;max-height:280px;}
 
-    .table-section{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;}
-    .table-section h2{font-size:.95rem;font-weight:600;margin-bottom:12px;}
+    .table-section{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      margin-bottom:18px;
+      box-shadow:var(--shadow);
+    }
+    .table-section h2{font-size:.98rem;font-weight:650;margin-bottom:12px;}
+
     table{width:100%;border-collapse:collapse;}
-    th{text-align:left;font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;padding:8px 8px 8px 0;border-bottom:2px solid #e2e8f0;}
-    td{padding:8px 8px 8px 0;border-bottom:1px solid #f1f5f9;font-size:.9rem;}
+    th{
+      text-align:left;
+      font-size:.8rem;
+      color:var(--muted);
+      padding:10px 10px 10px 0;
+      border-bottom:1px solid var(--border);
+      font-weight:650;
+    }
+    td{
+      padding:10px 10px 10px 0;
+      border-bottom:1px solid #f1f5f9;
+      font-size:.92rem;
+      color:var(--text);
+    }
+    tbody tr:hover{background:#f8fafc;}
+
+    #cats th:last-child,
+    #cats td:last-child,
+    #days th:nth-child(2),
+    #days td:nth-child(2),
+    #days th:nth-child(3),
+    #days td:nth-child(3){
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
     .muted{color:#94a3b8;}
+  
   </style>
 </head>
 <body>
@@ -73,7 +181,7 @@
 
   <div class="budget-section" id="budget-section" style="display:none;">
     <div class="budget-header">
-      <h2>Budget Progress</h2>
+      <h2>預算進度</h2>
       <span class="budget-nums" id="budget-nums"></span>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
@@ -92,12 +200,12 @@
 
   <div class="table-section">
     <h2 id="topCatTitle">Top Categories</h2>
-    <table id="cats"><thead><tr><th>Category</th><th>Expense</th></tr></thead><tbody></tbody></table>
+    <table id="cats"><thead><tr><th>分類</th><th>支出</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div class="table-section">
     <h2 id="daysTitle">近 14 天明細</h2>
-    <table id="days"><thead><tr><th>Date</th><th>Expense</th><th>Income</th></tr></thead><tbody></tbody></table>
+    <table id="days"><thead><tr><th>日期</th><th>支出</th><th>收入</th></tr></thead><tbody></tbody></table>
   </div>
 </div>
 
