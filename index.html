@@ -165,6 +165,7 @@
     <div class="filter-buttons" id="personButtons">
       <button class="pill" data-person="jimmy">Jimmy</button>
       <button class="pill" data-person="winnie">Winnie</button>
+      <button class="pill" data-person="shared">共同</button>
     </div>
     <div class="filter-meta muted" id="personLabel" style="margin-top:8px;"></div>
   </div>
@@ -380,7 +381,9 @@ function render(j){
   const rangeText = j?.range?.label ? `範圍：${j.range.label}` : '';
   document.getElementById('rangeLabel').textContent = rangeText;
 
-  const personText = (j?.person === 'winnie') ? '目前視角：Winnie' : '目前視角：Jimmy';
+    let personText = '目前視角：Jimmy';
+  if (j?.person === 'winnie') personText = '目前視角：Winnie';
+  if (j?.person === 'shared') personText = '目前視角：共同（Jimmy + Winnie）';
   const pl = document.getElementById('personLabel');
   if (pl) pl.textContent = personText;
 
